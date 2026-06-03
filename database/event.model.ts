@@ -126,24 +126,18 @@ const eventSchema = new Schema<IEvent>(
 
 eventSchema.index({ slug: 1 }, { unique: true });
 
-// Pre-save hook for slug generation and data normalizing
-eventSchema.pre("save", function (this: EventDocument, next) {
-    try {
-        validateRequiredFields(this);
+// Pre-save hook for slug generation and data normalizing.
+eventSchema.pre("save", function (this: EventDocument) {
+    validateRequiredFields(this);
 
-        if (this.isModified("title")) {
-            // Regenerate slug only when the title changes.
-            this.slug = slugify(this.title);
-        }
-
-        // Normalize date and time formats before writing to MongoDB.
-        this.date = normalizeDateToIso(this.date);
-        this.time = normalizeTime(this.time);
-
-        next();
-    } catch (error: unknown) {
-        next(error instanceof Error ? error : new Error("Failed to validate event."));
+    if (this.isModified("title")) {
+        // Regenerate slug only when the title changes.
+        this.slug = slugify(this.title);
     }
+
+    // Normalize date and time formats before writing to MongoDB.
+    this.date = normalizeDateToIso(this.date);
+    this.time = normalizeTime(this.time);
 });
 
 const Event = (models.Event as Model<IEvent> | undefined) ?? model<IEvent>("Event", eventSchema);
