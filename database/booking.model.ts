@@ -21,6 +21,8 @@ const bookingSchema = new Schema<IBooking>(
 );
 
 bookingSchema.index({ eventId: 1 });
+// Block duplicate bookings for the same event/email pair at the database level.
+bookingSchema.index({ eventId: 1, email: 1 }, { unique: true });
 
 bookingSchema.pre("save", async function (this: BookingDocument) {
     const normalizedEmail = this.email.trim().toLowerCase();
