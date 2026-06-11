@@ -1,60 +1,58 @@
-import {
-    Schema,
-    model,
-    models,
-    Types,
-    Model,
-} from "mongoose";
+import { Schema, model, models, Document, Types } from 'mongoose';
+import Event from './event.model';
 
-export interface IBooking {
+export interface IBooking extends Document {
     eventId: Types.ObjectId;
     email: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const bookingSchema = new Schema<IBooking>(
+const BookingSchema = new Schema<IBooking>(
     {
         eventId: {
             type: Schema.Types.ObjectId,
-            ref: "Event",
-            required: true,
+            ref: 'Event',
+            required: [true, 'Event ID is required'],
         },
         email: {
             type: String,
-            required: true,
+            required: [true, 'Email is required'],
             trim: true,
             lowercase: true,
             validate: {
-                validator: (v: string) => emailRegex.test(v),
-                message: "Invalid email format",
+                validator: function (email: string) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    return emailRegex.test(email);
+                },
+                message: 'Please provide a valid email address',
             },
         },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+    }
 );
 
-// indexes
-bookingSchema.index({ eventId: 1 });
-bookingSchema.index({ eventId: 1, email: 1 }, { unique: true });
-
-// ✅ SAFE validation (NO next(), NO circular import)
-bookingSchema.pre("save", async function () {
-    const Booking = this as IBooking;
-
-    const EventModel = model("Event");
-    const exists = await EventModel.findById(Booking.eventId);
-
-    if (!exists) {
-        throw new Error("Event does not exist");
+BookingSchema.pre('save', async function () {
+    const booking = this as IBooking;
+    if (booking.isModified('eventId') || booking.isNew) {
+        try {
+            const eventExists = await Event.findById(booking.eventId).select('_id');
+            if (!eventExists) {
+                throw new Error(`Event with ID ${booking.eventId} does not exist`);
+            }
+        } catch (e) {
+            throw new Error('Invalid event ID format or database error');
+        }
     }
 });
 
-const Booking =
-    (models.Booking as Model<IBooking>) ||
-    model<IBooking>("Booking", bookingSchema);
+BookingSchema.index({ eventId: 1 });
+BookingSchema.index({ eventId: 1, createdAt: -1 });
+BookingSchema.index({ email: 1 });
+BookingSchema.index({ eventId: 1, email: 1 }, { unique: true, name: 'uniq_event_email' });
+
+const Booking = models.Booking || model<IBooking>('Booking', BookingSchema);
 
 export default Booking;
-

@@ -6,6 +6,7 @@ import {IEvent} from "@/database/event.model";
 import {getSimilarEventBySlug} from "@/lib/actions/event.action";
 import EventCard from "@/components/EventCard";
 
+
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 const EventDetailItem = ({ icon, alt, label } : { icon: string, alt: string, label: string }) => (
@@ -35,12 +36,15 @@ const EventTags = ({ tags }: { tags: string[] }) => (
 )
 
 const EventDetailsPage = async ({ params } : { params: Promise<{ slug: string }>}) => {
+
     const { slug } = await params;
 
     let event;
 
     try {
-        const request = await fetch(`${BASE_URL}/api/events/${slug}`);
+        const request = await fetch(`${BASE_URL}/api/events/${slug}`, {
+            next: { revalidate: 3600 }
+        } as RequestInit & { next: { revalidate: number } });
 
         if (!request.ok) {
             if (request.status === 404) {
@@ -118,7 +122,7 @@ const EventDetailsPage = async ({ params } : { params: Promise<{ slug: string }>
                             <p className="text-sm">Be the first to book your spot!</p>
                         )}
 
-                        <BookEvent />
+                        <BookEvent eventId={event._id} slug={event.slug} />
                     </div>
                 </aside>
             </div>
