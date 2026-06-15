@@ -1,30 +1,24 @@
 import React from 'react'
 import ExploreBtn from "@/components/ExploreBtn";
 import EventCard from "@/components/EventCard";
-import {IEvent} from "@/database/event.model";
-// import {events} from "@/lib/constants"
+import { IEvent } from "@/database/event.model";
+import { getAllEvents } from "@/lib/actions/event.action";
 
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
 const Page = async () => {
-
-    const response = await fetch(`${BASE_URL}/api/events`, {
-        next: { revalidate: 3600 }
-    } as RequestInit & { next: { revalidate: number } });
-
-    const { events } = await response.json();
+    const events = await getAllEvents();
+    const serializedEvents = JSON.parse(JSON.stringify(events));
 
     return (
         <section className="text-center">
-          <h1>The Hub for Every Dev <br/> Events You Can&lsquo;t Miss</h1>
-          <p className="text-center mt-5">Hackathons, Meetups, and Conferences, All in one place</p>
+            <h1>The Hub for Every Dev <br/> Events You Can&lsquo;t Miss</h1>
+            <p className="text-center mt-5">Hackathons, Meetups, and Conferences, All in one place</p>
 
-          <ExploreBtn/>
+            <ExploreBtn/>
 
             <div className="mt-20 space-y-7">
                 <h3>Featured Events</h3>
                 <ul className="events">
-                    {events && events.length > 0 && events.map((event: IEvent) => (
+                    {serializedEvents && serializedEvents.length > 0 && serializedEvents.map((event: IEvent) => (
                         <li key={event.title} className="list-none">
                             <EventCard {...event}/>
                         </li>
@@ -34,4 +28,5 @@ const Page = async () => {
         </section>
     )
 }
+
 export default Page
