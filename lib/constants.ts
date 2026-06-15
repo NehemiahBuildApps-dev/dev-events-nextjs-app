@@ -3,7 +3,7 @@ export const events = [
         title: "Next.js Conf 2026",
         image: "/images/event1.png",
         slug: "nextjs-conf-2026",
-        location: "San Francisco, CA",
+        location: "Maitama Abuja, NGR",
         date: "2026-10-25",
         time: "10:00 AM"
     },
